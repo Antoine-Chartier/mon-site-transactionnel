@@ -28,6 +28,9 @@ export async function createCheckoutSession(
           quantity: 1,
         },
       ],
+      customer_creation: "if_required",
+      invoice_creation: { enabled: true },
+      billing_address_collection: "required", // Force la saisie de l'email
       success_url: `${process.env.NEXT_PUBLIC_BASE_URL}/success`,
       cancel_url: `${process.env.NEXT_PUBLIC_BASE_URL}/`,
     });

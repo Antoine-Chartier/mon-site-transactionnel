@@ -42,36 +42,45 @@ export async function POST(request: NextRequest) {
         return NextResponse.json({ received: true });
       }
 
-      // Utiliser le client admin Supabase pour mettre à jour la base de données
+      // Récupérer les détails des produits depuis les line_items
+      const sessionWithLineItems = await stripe.checkout.sessions.retrieve(
+        session.id,
+        { expand: ['line_items'] }
+      );
+
+      const lineItems = sessionWithLineItems.line_items?.data || [];
+      const productDetails = lineItems.map((item) => {
+        // Le nom du produit est dans description (qui contient généralement le nom)
+        // Pour une description plus détaillée, on peut utiliser item.description complet
+        const description = item.description || 'Unknown';
+        const parts = description.split('\n');
+        const productName = parts[0] || description;
+        
+        return {
+          name: productName,
+          description: description,
+          quantity: item.quantity || 1,
+          amount: item.amount_total || 0,
+        };
+      });
+
+      // Utiliser le client admin Supabase pour insérer dans Orders
       const supabase = createAdminClient();
 
-      // Ajouter une entrée dans la table 'purchases'
-      // const { error: purchaseError } = await supabase
-      //   .from('purchases')
-      //   .insert({
-      //     email,
-      //     stripe_session_id: session.id,
-      //     amount_total: session.amount_total,
-      //     currency: session.currency,
-      //     created_at: new Date().toISOString(),
-      //   });
+      const { error: orderError } = await supabase
+        .from('Orders')
+        .insert({
+          email,
+          stripe_session_id: session.id,
+          amount_total: session.amount_total,
+          currency: session.currency,
+          product_details: productDetails,
+          created_at: new Date().toISOString(),
+        });
 
-      // if (purchaseError) {
-      //   console.error('Error inserting purchase:', purchaseError);
-      // }
-
-      // Optionnel: Mettre à jour un flag is_paid dans une table users
-      // Décommentez les lignes suivantes si vous avez une table users avec un champ is_paid
-      
-      const { error: updateError } = await supabase
-        .from('users')
-        .update({ is_paid: true })
-        .eq('email', email);
-
-      if (updateError) {
-        console.error('Error updating user:', updateError);
+      if (orderError) {
+        console.error('Error inserting order:', orderError);
       }
-      
     }
 
     return NextResponse.json({ received: true });
