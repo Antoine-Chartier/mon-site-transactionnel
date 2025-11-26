@@ -18,7 +18,7 @@ export async function createCheckoutSession(
       line_items: [
         {
           price_data: {
-            currency: "eur",
+            currency: "cad",
             product_data: {
               name,
               description,

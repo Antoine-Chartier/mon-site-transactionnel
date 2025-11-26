@@ -60,7 +60,7 @@ export default async function Home() {
             {products.map((product, index) => {
               const isPopular = index === 1; // Mettre en évidence le 2ème produit
               const price = typeof product.price === 'number' 
-                ? new Intl.NumberFormat('fr-FR', { style: 'currency', currency: 'EUR' }).format(product.price)
+                ? new Intl.NumberFormat('fr-FR', { style: 'currency', currency: 'CAD' }).format(product.price)
                 : product.price;
               
               return (
